@@ -399,19 +399,81 @@ Right-click → Create → Animator Controller → Name: `PlayerAnimator`
 
 ## 3.5 Jump States
 
-### Create States:
-- JumpStart
-- Falling
-- Landing
+### Understanding Jump Phases:
+
+A jump animation is typically split into **3 phases**:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                         JUMP ANIMATION PHASES                        │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│   🧍 Standing    →    🦘 Jump Start    →    🪂 Falling    →    🦶 Landing   │
+│   (Locomotion)       (Leaving ground)      (In the air)      (Hit ground)  │
+│                                                                      │
+│   Timeline:                                                          │
+│   ─────────────────────────────────────────────────────────────────  │
+│   [Idle/Walk/Run] → [Crouch & Push Off] → [Arms Up, Floating] → [Absorb Impact] │
+│                          ~0.3 sec            variable            ~0.3 sec       │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### What "JumpStart" Means:
+
+**JumpStart** = The initial takeoff animation when the player BEGINS a jump:
+- Player crouches slightly
+- Pushes off the ground
+- Arms move for balance
+- Plays for ~0.3 seconds (NOT looping)
+- **NOT related to sprinting** - it's just the "start" of any jump
+
+On Mixamo, search for: **"Jump"** - the animation includes all phases, but you can:
+1. Use the full "Jump" animation and let it transition to Falling
+2. OR split it in Unity (use only first few frames for takeoff)
+
+### Create These States in Animator:
+
+| State Name | Animation | Loop? | Purpose |
+|------------|-----------|-------|---------|
+| **JumpStart** | Jump (first ~0.3 sec) | NO | Initial takeoff moment |
+| **Falling** | "Falling Idle" | YES | While in the air |
+| **Landing** | "Landing" or jump end | NO | Impact absorption |
 
 ### Transitions:
 ```
 Locomotion → JumpStart: Jump trigger, No Exit Time
-JumpStart → Falling: Exit Time 0.9
+JumpStart → Falling: Exit Time 0.9 (after takeoff animation plays)
 Falling → Landing: IsGrounded = true
 Landing → Locomotion: Exit Time 0.9
-Locomotion → Falling: IsGrounded = false, VerticalVelocity < -1
+Locomotion → Falling: IsGrounded = false, VerticalVelocity < -1 (walking off ledge)
 ```
+
+### Visual State Machine:
+```
+                    ┌──────────────┐
+                    │  JumpStart   │
+        Jump        │  (takeoff)   │
+     Trigger ──────►│   ~0.3 sec   │
+                    └──────┬───────┘
+                           │ Exit Time 0.9
+┌────────────┐             ▼
+│ Locomotion │◄────── ┌──────────────┐
+│ (idle/walk/│        │   Falling    │
+│    run)    │        │  (in air)    │◄──┐
+└─────┬──────┘        │    LOOP      │   │
+      │               └──────┬───────┘   │
+      │                      │           │
+      │ IsGrounded=false     │ IsGrounded=true
+      │ & falling            │           │
+      │                      ▼           │
+      │               ┌──────────────┐   │
+      └──────────────►│   Landing    │───┘
+         Exit Time    │  (impact)    │ (if still in air)
+                      │   ~0.3 sec   │
+                      └──────────────┘
+```
+
+> **💡 Pro Tip:** In Mixamo, the "Jump" animation usually contains the full sequence. You can use it as-is for JumpStart and let the Falling state take over mid-air!
 
 ## 3.6 Animation Script
 
