@@ -257,13 +257,36 @@ public class PlayerController : MonoBehaviour
 2. Sign in (free Adobe account)
 3. Upload character OR choose one
 
-### Download Settings:
-- Format: **FBX for Unity**
-- Skin: **Without Skin** (for animations)
-- FPS: **30**
-- Keyframe Reduction: **none**
+### 🎯 IMPORTANT: Rifle vs Unarmed Animations
 
-### Player Animations Needed:
+**Short Answer: Download UNARMED animations for the third-person body.**
+
+Here's why:
+
+| Approach | Pros | Cons | Recommendation |
+|----------|------|------|----------------|
+| **Unarmed Base** | Works with ANY weapon, flexible, can add rifle layer later | Need upper body override layer | ✅ **RECOMMENDED** |
+| **Rifle Holding** | Looks correct immediately | Locked to rifle pose, can't easily switch to pistol/melee/unarmed | ❌ Limiting |
+
+### How This Works in FPS Games:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    ANIMATION LAYERS                         │
+├─────────────────────────────────────────────────────────────┤
+│ Layer 3: Action Override (Reload, Melee)    ← Highest      │
+│ Layer 2: Upper Body Aim/Hold Pose           ← Weapon layer │
+│ Layer 1: Base Locomotion (UNARMED)          ← Your legs    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+- **Base layer (unarmed):** Controls legs and overall body movement
+- **Upper body layer:** Overrides torso/arms with weapon-holding pose
+- **This lets you:** Switch weapons, go unarmed, melee, all with same leg animations!
+
+### What To Download for Third-Person Body:
+
+**UNARMED locomotion animations:**
 
 | Animation | Mixamo Search | Settings |
 |-----------|---------------|----------|
@@ -278,7 +301,38 @@ public class PlayerController : MonoBehaviour
 | Falling | "Falling Idle" | In Place ✓, Loop ✓ |
 | Landing | "Landing" | In Place ✓ |
 
+### What To Download for Weapon Holding (Upper Body Only):
+
+| Animation | Mixamo Search | Use For |
+|-----------|---------------|---------|
+| Rifle Idle | "Rifle Aiming Idle" | Upper body layer when holding rifle |
+| Rifle Walk | "Rifle Walk" | Optional: blend with locomotion |
+| Pistol Idle | "Pistol Idle" | When holding pistol |
+
+> **💡 Pro Tip:** You only need 1-2 rifle/pistol poses for the upper body layer. The unarmed legs do all the heavy lifting!
+
+### Download Settings:
+- Format: **FBX for Unity**
+- Skin: **Without Skin** (for animations only)
+- FPS: **30**
+- Keyframe Reduction: **none**
+
 **⚠️ "In Place" is important - it keeps character stationary so your code controls movement!**
+
+### First-Person Arms (Separate from Third-Person):
+
+For your first-person view, you WILL want rifle-holding animations, but these are for the **first-person arm rig** (Module 4), not the third-person body. These are typically:
+- Separate arm-only models
+- Different animations than third-person
+- Bought from Asset Store or custom made
+
+> **AI Prompt - If confused about layers:**
+> ```
+> I'm setting up animation layers in Unity for an FPS game.
+> I want unarmed locomotion on the base layer and rifle holding
+> on the upper body layer. Can you explain how to set up the 
+> Avatar Mask and layer blending for this?
+> ```
 
 ## 3.2 Import to Unity
 
