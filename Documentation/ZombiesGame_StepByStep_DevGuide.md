@@ -485,13 +485,13 @@ using UnityEngine;
 public class PlayerAnimator : MonoBehaviour
 {
     [SerializeField] private PlayerController playerController;
-    [SerializeField] private float smoothing = 0.1f;
+    [SerializeField] private float smoothTime = 0.1f;  // How fast to smooth (seconds)
     
     private Animator animator;
-    private Vector2 currentVelocity;
-    private Vector2 smoothVelocity;
+    private Vector2 currentVelocity;      // The smoothed velocity we send to animator
+    private Vector2 smoothDampVelocity;   // Internal velocity tracker for SmoothDamp (DO NOT CONFUSE WITH smoothTime!)
     
-    // Parameter hashes
+    // Parameter hashes (for performance - avoid string lookups every frame)
     private static readonly int VelocityX = Animator.StringToHash("VelocityX");
     private static readonly int VelocityZ = Animator.StringToHash("VelocityZ");
     private static readonly int Speed = Animator.StringToHash("Speed");
@@ -507,12 +507,24 @@ public class PlayerAnimator : MonoBehaviour
     
     private void Update()
     {
+        // Get raw input from player controller
         Vector2 input = playerController.GetMoveInput();
+        
+        // Scale based on sprint (1.0 for sprint, 0.5 for walk)
         float multiplier = playerController.IsSprinting() ? 1f : 0.5f;
-        Vector2 target = input * multiplier;
+        Vector2 targetVelocity = input * multiplier;
         
-        currentVelocity = Vector2.SmoothDamp(currentVelocity, target, ref smoothVelocity, smoothing);
+        // Smooth the velocity transition
+        // ⚠️ IMPORTANT: The third parameter must be a Vector2 (smoothDampVelocity), 
+        //              NOT the float smoothTime! This is a common mistake.
+        currentVelocity = Vector2.SmoothDamp(
+            currentVelocity,          // current value
+            targetVelocity,           // target value
+            ref smoothDampVelocity,   // ref Vector2 - internal velocity tracker
+            smoothTime                // float - time to smooth
+        );
         
+        // Send to animator
         animator.SetFloat(VelocityX, currentVelocity.x);
         animator.SetFloat(VelocityZ, currentVelocity.y);
         animator.SetFloat(Speed, currentVelocity.magnitude);
@@ -527,6 +539,18 @@ public class PlayerAnimator : MonoBehaviour
     }
 }
 ```
+
+> ⚠️ **Common Error:** `CS0029: Cannot implicitly convert type 'float' to 'Vector2'`
+> 
+> This happens if you accidentally write:
+> ```csharp
+> // ❌ WRONG - smoothTime is a float, not Vector2!
+> currentVelocity = Vector2.SmoothDamp(currentVelocity, target, ref smoothTime, smoothTime);
+> 
+> // ✅ CORRECT - smoothDampVelocity is Vector2
+> currentVelocity = Vector2.SmoothDamp(currentVelocity, target, ref smoothDampVelocity, smoothTime);
+> ```
+> The third parameter (`ref`) must be a **Vector2** that tracks internal velocity state.
 
 > **AI Prompt - Animation Problems:**
 > ```
